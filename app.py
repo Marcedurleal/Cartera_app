@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import io
 import logging
-pip install --upgrade pandas openpyxl xlrd
+!pip install --upgrade pandas openpyxl xlrd
 
 
 # --------------------- CONFIGURACIÓN INICIAL ---------------------
@@ -209,4 +209,5 @@ with st.sidebar:
             st.warning("⚠ " + msg)
         else:
             st.info("ℹ " + msg)
+
 
