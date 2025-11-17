@@ -214,7 +214,6 @@ with st.sidebar:
 
     st.write("Genera un archivo Word con los morosos agrupados por torre.")
 
-    Nombre_conjunto = st.text_input("Nombre del conjunto:")
     Fecha_corte_str = st.text_input("Fecha de corte (dd/mm/aaaa):")
 
     if st.button("📄 Generar Cartera por Torre"):
@@ -300,6 +299,7 @@ with st.sidebar:
         except Exception as e:
             st.error("❌ Error generando el archivo Word.")
             st.write(str(e))
+
 
 
 
