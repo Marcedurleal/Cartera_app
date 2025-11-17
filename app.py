@@ -209,5 +209,97 @@ with st.sidebar:
         else:
             st.info("ℹ " + msg)
 
+    # ------------------------ GENERAR CARTERA POR TORRE (WORD) -------------------------
+    st.subheader("📄 Cartera por Torre")
+
+    st.write("Genera un archivo Word con los morosos agrupados por torre.")
+
+    Nombre_conjunto = st.text_input("Nombre del conjunto:")
+    Fecha_corte_str = st.text_input("Fecha de corte (dd/mm/aaaa):")
+
+    if st.button("📄 Generar Cartera por Torre"):
+        from datetime import datetime
+        from docx import Document
+
+        # Validar inputs
+        if not Nombre_conjunto or not Fecha_corte_str:
+            st.error("⚠ Debes ingresar el nombre del conjunto y la fecha de corte.")
+            st.stop()
+
+        try:
+            Fecha_corte = datetime.strptime(Fecha_corte_str, "%d/%m/%Y").date()
+        except:
+            st.error("❌ Formato de fecha inválido. Debe ser dd/mm/aaaa.")
+            st.stop()
+
+        try:
+            # Usar la hoja original CARTERA
+            df_cartera_word = pd.read_excel(uploaded_file, sheet_name='CARTERA')
+
+            # Validar columnas
+            if "total" not in df_cartera_word.columns or "interior" not in df_cartera_word.columns:
+                st.error("❌ La hoja CARTERA no contiene las columnas necesarias: 'total' y 'interior'")
+                st.stop()
+
+            # Filtrar morosos
+            df_cartera_filtered = df_cartera_word[df_cartera_word["total"] > 1000]
+
+            if df_cartera_filtered.empty:
+                st.warning("No hay morosos con total mayor a 1000.")
+                st.stop()
+
+            # Crear documento Word
+            document = Document()
+
+            unique_towers = df_cartera_filtered["interior"].unique()
+
+            first_tower = True
+
+            for tower in unique_towers:
+
+                if not first_tower:
+                    document.add_page_break()
+                else:
+                    first_tower = False
+
+                df_tower = df_cartera_filtered[df_cartera_filtered["interior"] == tower]
+
+                document.add_heading(f"MOROSOS TORRE {tower}", level=1)
+                document.add_paragraph(
+                    f"A continuación se relacionan los morosos de la torre {tower} "
+                    f"con corte a {Fecha_corte.strftime('%d/%m/%Y')} del conjunto {Nombre_conjunto}."
+                )
+
+                # Crear tabla
+                table = document.add_table(rows=1, cols=2)
+                table.style = "Table Grid"
+
+                hdr_cells = table.rows[0].cells
+                hdr_cells[0].text = "Código"
+                hdr_cells[1].text = "Total"
+
+                for idx, row in df_tower.iterrows():
+                    row_cells = table.add_row().cells
+                    row_cells[0].text = str(row["codigo"])
+                    row_cells[1].text = f"{row['total']:,}"
+
+            # Guardar en memoria
+            buffer_word = io.BytesIO()
+            document.save(buffer_word)
+            buffer_word.seek(0)
+
+            st.success("✔ Archivo Word generado correctamente.")
+
+            st.download_button(
+                label="📄 Descargar Word – Cartera por Torre",
+                data=buffer_word,
+                file_name="Cartera_por_Torre.docx",
+                mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            )
+
+        except Exception as e:
+            st.error("❌ Error generando el archivo Word.")
+            st.write(str(e))
+
 
 
