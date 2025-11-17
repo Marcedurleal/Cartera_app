@@ -221,8 +221,8 @@ with st.sidebar:
         from docx import Document
 
         # Validar inputs
-        if not Nombre_conjunto or not Fecha_corte_str:
-            st.error("⚠ Debes ingresar el nombre del conjunto y la fecha de corte.")
+        if not Fecha_corte_str:
+            st.error("⚠ Debes ingresar la fecha de corte.")
             st.stop()
 
         try:
@@ -266,7 +266,7 @@ with st.sidebar:
                 document.add_heading(f"MOROSOS TORRE {tower}", level=1)
                 document.add_paragraph(
                     f"A continuación se relacionan los morosos de la torre {tower} "
-                    f"con corte a {Fecha_corte.strftime('%d/%m/%Y')} del conjunto {Nombre_conjunto}."
+                    f"con corte a {Fecha_corte.strftime('%d/%m/%Y')}"
                 )
 
                 # Crear tabla
@@ -299,6 +299,7 @@ with st.sidebar:
         except Exception as e:
             st.error("❌ Error generando el archivo Word.")
             st.write(str(e))
+
 
 
 
