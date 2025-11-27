@@ -280,7 +280,7 @@ with st.sidebar:
                 for idx, row in df_tower.iterrows():
                     row_cells = table.add_row().cells
                     row_cells[0].text = str(row["codigo"])
-                    row_cells[1].text = f"{row['total']:,}"
+                    row_cells[1].text = f"{row['total']:.}"
 
             # Guardar en memoria
             buffer_word = io.BytesIO()
@@ -299,6 +299,7 @@ with st.sidebar:
         except Exception as e:
             st.error("❌ Error generando el archivo Word.")
             st.write(str(e))
+
 
 
 
