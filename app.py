@@ -145,8 +145,8 @@ if uploaded_file is not None:
     # Orden columnas
     orden_columnas = [
         'codigo', 'ADMINISTRACION', 'INTERESES', 'PARQUEADEROS',
-        'SANCIONES', 'EXTRAORDINARIA', 'ABOGADOS', 'OTROS',
-        'TOTAL A PAGAR', 'SALDO A FAVOR'
+        'SANCIONES', 'EXTRAORDINARIA', 'ABOGADOS', 
+        'TOTAL A PAGAR', 'SALDO A FAVOR','OTROS'
     ]
 
     cartera_app = cartera_app.reindex(columns=orden_columnas)
@@ -299,6 +299,7 @@ with st.sidebar:
         except Exception as e:
             st.error("❌ Error generando el archivo Word.")
             st.write(str(e))
+
 
 
 
