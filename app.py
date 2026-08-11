@@ -26,6 +26,17 @@ def log(msg, level="info"):
     else:
         logging.info(msg)
 
+def format_currency(val):
+    """Formatea valores numéricos como moneda ($126.850 o -$126.850)."""
+    try:
+        val = float(val)
+        if val < 0:
+            return f"-${abs(val):,.0f}".replace(",", ".")
+        else:
+            return f"${val:,.0f}".replace(",", ".")
+    except (ValueError, TypeError):
+        return "$0"
+
 
 # -------------------------- CARGA DEL ARCHIVO ---------------------
 st.subheader("📥 Cargar archivo")
@@ -82,7 +93,8 @@ if uploaded_file is not None:
             else:
                 fachadas_val = 0
 
-            # 1. Crear columna 'Administración y parqueaderos' = total - c_13050506
+            # 1. Cálculo de Administración y parqueaderos = total - c_13050506
+            # (Se permite que el resultado sea negativo en caso de haber anticipos/saldos a favor)
             df_proc["Administración y parqueaderos"] = df_proc["total"].fillna(0) - fachadas_val
 
             # 2. Asignar/Renombrar columna 'Fachadas'
@@ -93,22 +105,29 @@ if uploaded_file is not None:
 
             df_proc["Fachadas"] = df_proc["Fachadas"].fillna(0)
 
-            # Filtrar morosos (total > 1000)
-            df_filtered = df_proc[df_proc["total"] > 1000].copy()
+            # 3. FILTRADO: total > 1000 Y 'interior' no sea 0, "0", ni nulo/vacío
+            cond_total = df_proc["total"] > 1000
+            cond_interior_valido = (
+                df_proc["interior"].notna() &
+                (~df_proc["interior"].isin([0, "0", 0.0, "0.0"])) &
+                (df_proc["interior"].astype(str).str.strip() != "")
+            )
+
+            df_filtered = df_proc[cond_total & cond_interior_valido].copy()
 
             if df_filtered.empty:
-                st.warning("No se encontraron registros de morosos con total mayor a $1.000.")
+                st.warning("No se encontraron registros de morosos válidos (total > $1.000 e interior distinto de 0 o nulo).")
                 st.stop()
 
             # ---------------- CONSTRUCCIÓN DEL DOCUMENTO WORD ----------------
             document = Document()
-            unique_towers = df_filtered["interior"].dropna().unique()
+            unique_towers = df_filtered["interior"].unique()
 
             first_tower = True
 
             for tower in unique_towers:
 
-                # Limpieza y pulido del nombre de la Torre (convierte '12.0' -> '12')
+                # Limpieza del nombre de la Torre (convierte '12.0' -> '12')
                 try:
                     tower_clean = str(int(float(tower)))
                 except (ValueError, TypeError):
@@ -141,16 +160,16 @@ if uploaded_file is not None:
                 for _, row in df_tower.iterrows():
                     row_cells = table.add_row().cells
 
-                    # Formatear el código si es numérico
+                    # Formatear el código si es numérico (quitar .0)
                     try:
                         codigo_str = str(int(float(row["codigo"])))
                     except (ValueError, TypeError):
                         codigo_str = str(row["codigo"])
 
                     row_cells[0].text = codigo_str
-                    row_cells[1].text = f"${row['Administración y parqueaderos']:,.0f}"
-                    row_cells[2].text = f"${row['Fachadas']:,.0f}"
-                    row_cells[3].text = f"${row['total']:,.0f}"
+                    row_cells[1].text = format_currency(row["Administración y parqueaderos"])
+                    row_cells[2].text = format_currency(row["Fachadas"])
+                    row_cells[3].text = format_currency(row["total"])
 
             # Guardar en buffer de memoria
             buffer_word = io.BytesIO()
